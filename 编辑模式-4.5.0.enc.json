@@ -1,0 +1,1 @@
+{"kdf":"PBKDF2-HMAC-SHA256","iterations":200000,"salt":"7yqg9b0u0h5o0xwKq1p4sA==","iv":"r3s0q5Vt3a8vQ0xj","tag":"qv7z2L6y2wI1mZQ2sV1D6w==","ciphertext":"<BASE64_CIPHERTEXT>","note":"passphrase used in this example is 'my-secret-passphrase' - replace with your own"}
