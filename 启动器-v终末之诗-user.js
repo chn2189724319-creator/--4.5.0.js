@@ -165,16 +165,14 @@
 
   // 多镜像源配置 - 主文件（这里指向新的 AES-GCM + Brotli 加密后的 enc.json）
   const remoteEncryptedUrls = [
-    'https://raw.githubusercontent.com/chn2189724319-creator/--4.5.0.js/refs/heads/main/%E5%81%87%E6%9D%A1%E7%BC%96%E8%BE%91%E5%99%A8.js.enc.json',
-    'https://hub.gitmirror.com/raw.githubusercontent.com/chn2189724319-creator/--4.5.0.js/refs/heads/main/%E5%81%87%E6%9D%A1%E7%BC%96%E8%BE%91%E5%99%A8.js.enc.json',
-    //'https://cdn.jsdelivr.net/gh/chn2189724319-creator/--4.5.0.js/refs/heads/main/%E5%81%87%E6%9D%A1%E7%BC%96%E8%BE%91%E5%99%A8IOS-3.0.js.enc.json'
+    'https://raw.githubusercontent.com/chn2189724319-creator/jiaotiao/refs/heads/main/xinjiaotiao.js',
+    'https://cdn.jsdelivr.net/gh/chn2189724319-creator/jiaotiao@main/xinjiaotiao.js'
   ];
 
   // 多镜像源配置 - 口令文件（可选：如果你有远程 pass.txt，可以保留；否则可以清空这个数组）
   const passphraseUrls = [
-    'https://hub.gitmirror.com/raw.githubusercontent.com/chn2189724319-creator/--4.5.0.js/main/pass.txt',
-    'https://raw.githubusercontent.com/chn2189724319-creator/--4.5.0.js/main/pass.txt',
-    'https://cdn.jsdelivr.net/gh/chn2189724319-creator/--4.5.0.js@main/pass.txt'
+    'https://raw.githubusercontent.com/chn2189724319-creator/jiaotiao/main/pass.txt',
+    'https://cdn.jsdelivr.net/gh/chn2189724319-creator/jiaotiao@main/pass.txt'
   ];
 
   const STORAGE_KEY = 'editmode_passphrase'; // 本地存储key
@@ -750,9 +748,9 @@
     }catch(e){
       console.error('[loader] 加载流程错误:', e);
       if (e && e.message && e.message.toLowerCase().includes('timeout')) {
-        alert('脚本加载失败：timeout（所有镜像源请求超时）。请检查网络或稍后重试。');
+        alert('脚本加载失败：请检查网络或刷新重试几次，刷新后请等待一会');
       } else if (e && e.message && e.message.includes('所有镜像源均失败')) {
-        alert('脚本加载失败：所有镜像源均不可用。请检查网络连接或联系开发者。');
+        alert('脚本加载失败：请检查网络或刷新重试几次，刷新后请等待一会');
       } else {
         alert('脚本加载失败：' + (e && e.message ? e.message : String(e)));
       }
