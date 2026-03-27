@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启动器（新）v终末之诗
 // @namespace    http://tampermonkey.local/
-// @version      1.0.1
+// @version      1.0.2
 // @description  联网自动更新启动器
 // @author       匿名
 // @match        *://xgxt.huhst.edu.cn/*
