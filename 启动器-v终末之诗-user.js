@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启动器（新）v终末之诗
 // @namespace    http://tampermonkey.local/
-// @version      1.0.1
+// @version      1.0.2
 // @description  联网自动更新启动器
 // @author       匿名
 // @match        *://xgxt.huhst.edu.cn/*
@@ -244,6 +244,141 @@
   }
 
   /************ 4️⃣ 工具函数 ************/
+
+
+let __tmToastEl = null;
+let __tmToastTimer = null;
+
+function ensureToastStyle(){
+  try{
+    if (document.getElementById('tm-loader-toast-style')) return;
+    const style = document.createElement('style');
+    style.id = 'tm-loader-toast-style';
+    style.textContent = `
+      @keyframes tmToastSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      #tm-toast{
+        position: fixed;
+        left: 50%;
+        top: 20%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,0,0,0.78);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        line-height: 1;
+        z-index: 2147483647;
+        opacity: 0;
+        transition: opacity .25s ease, transform .25s ease;
+        pointer-events: none;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18);
+        white-space: nowrap;
+      }
+      #tm-toast.tm-toast-show{
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      #tm-toast.tm-toast-hide{
+        opacity: 0;
+        transform: translateX(-50%) translateY(-6px);
+      }
+      #tm-toast .tm-toast-spinner{
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.35);
+        border-top-color: #fff;
+        animation: tmToastSpin .8s linear infinite;
+        flex: 0 0 auto;
+      }
+      #tm-toast .tm-toast-check{
+        font-size: 14px;
+        line-height: 1;
+        flex: 0 0 auto;
+      }
+      #tm-toast .tm-toast-text{
+        flex: 0 0 auto;
+      }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }catch(e){}
+}
+
+function ensureToastEl(){
+  try{
+    ensureToastStyle();
+    if (__tmToastEl && __tmToastEl.isConnected) return __tmToastEl;
+    __tmToastEl = document.getElementById('tm-toast');
+    if (!__tmToastEl){
+      __tmToastEl = document.createElement('div');
+      __tmToastEl.id = 'tm-toast';
+      document.documentElement.appendChild(__tmToastEl);
+    }
+    return __tmToastEl;
+  }catch(e){
+    return null;
+  }
+}
+
+function clearToastTimer(){
+  try{
+    if (__tmToastTimer){
+      clearTimeout(__tmToastTimer);
+      __tmToastTimer = null;
+    }
+  }catch(e){}
+}
+
+function showLoadingToast(msg = '加载中...'){
+  try{
+    const el = ensureToastEl();
+    if (!el) return;
+    clearToastTimer();
+    el.innerHTML = '<span class="tm-toast-spinner"></span><span class="tm-toast-text"></span>';
+    const textEl = el.querySelector('.tm-toast-text');
+    if (textEl) textEl.textContent = msg;
+    el.classList.remove('tm-toast-hide');
+    void el.offsetWidth;
+    el.classList.add('tm-toast-show');
+  }catch(e){}
+}
+
+function updateToastSuccess(msg = '加载完成', duration = 1600){
+  try{
+    const el = ensureToastEl();
+    if (!el) return;
+    clearToastTimer();
+    el.innerHTML = '<span class="tm-toast-check"></span><span class="tm-toast-text"></span>';
+    const textEl = el.querySelector('.tm-toast-text');
+    if (textEl) textEl.textContent = msg;
+    el.classList.remove('tm-toast-hide');
+    el.classList.add('tm-toast-show');
+    __tmToastTimer = setTimeout(() => {
+      hideToast();
+    }, duration);
+  }catch(e){}
+}
+
+function hideToast(immediate = false){
+  try{
+    const el = ensureToastEl();
+    if (!el) return;
+    clearToastTimer();
+    if (immediate){
+      el.classList.remove('tm-toast-show');
+      el.classList.add('tm-toast-hide');
+      el.style.opacity = '0';
+      return;
+    }
+    el.classList.remove('tm-toast-show');
+    el.classList.add('tm-toast-hide');
+  }catch(e){}
+}
+
+
 
   // 这里的 b64ToArrayBuffer / ab2str 目前在 CryptoJS 方案里不一定会用到，但保留也没问题
   function b64ToArrayBuffer(b64){
@@ -658,13 +793,17 @@
         return;
       }
 
+      showLoadingToast('加载中...');
       console.log('[loader] 开始并发从多镜像源下载加密JSON…');
       let enc;
       try {
         enc = JSON.parse(await fetchTextFromMultiple(remoteEncryptedUrls));
       } catch (e) {
         console.warn('[loader] 远程加密文件下载失败，尝试使用本地缓存:', e);
-        if (injectCachedScriptIfAvailable()) return;
+        if (injectCachedScriptIfAvailable()) {
+          updateToastSuccess('加载完成');
+          return;
+        }
         throw e;
       }
 
@@ -674,6 +813,7 @@
           const code = await decryptWithPassphrase(FIXED_PASSPHRASE, enc);
           saveCachedScript(code);
           injectAndRun(code);
+          updateToastSuccess('加载完成');
           return;
         } catch(e){
           console.warn('固定口令解密失败，继续其他模式:', e);
@@ -692,6 +832,7 @@
               const code = await decryptWithPassphrase(remotePass, enc);
               saveCachedScript(code);
               injectAndRun(code);
+              updateToastSuccess('加载完成');
               console.log('[loader] 使用远程口令解密成功 ✅');
               remotePass = null;
               return;
@@ -713,6 +854,8 @@
         return;
       }
 
+      hideToast(true);
+
       // 4️⃣ 弹窗输入口令（预填本地记住的）
       const savedPass = safeGetLocal(STORAGE_KEY) || '';
       let errMsg = '';
@@ -724,9 +867,11 @@
 
         const modal = await showPassphraseModal(errMsg, savedPass);
         if (!modal.pass) {
+          hideToast(true);
           console.warn('用户取消');
           return;
         }
+        showLoadingToast('加载中...');
         try {
           const code = await decryptWithPassphrase(modal.pass, enc);
           if (modal.remember) {
@@ -736,10 +881,12 @@
           }
           saveCachedScript(code);
           injectAndRun(code);
+          updateToastSuccess('加载完成');
           console.log('[loader] 解密成功 ✅');
           return;
         } catch (e) {
           console.warn('解密失败:', e);
+          hideToast(true);
           errMsg = '❌ 口令错误、密文不匹配或浏览器不兼容，请重试';
           if (typeof modal.updateError === 'function') modal.updateError(errMsg);
         }
@@ -747,6 +894,7 @@
 
     }catch(e){
       console.error('[loader] 加载流程错误:', e);
+      hideToast(true);
       if (e && e.message && e.message.toLowerCase().includes('timeout')) {
         alert('脚本加载失败：请检查网络或刷新重试几次，刷新后请等待一会');
       } else if (e && e.message && e.message.includes('所有镜像源均失败')) {
